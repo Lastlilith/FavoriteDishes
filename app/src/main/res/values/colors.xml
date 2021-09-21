@@ -19,4 +19,6 @@
     <color name="secondary_dark_color">#519657</color>
     <color name="secondary_light_color">#B2FAB4</color>
 
+    <color name="divider_line_color">#E0E0E0</color>
+
 </resources>
