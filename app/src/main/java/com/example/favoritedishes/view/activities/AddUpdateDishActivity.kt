@@ -1,17 +1,9 @@
 package com.example.favoritedishes.view.activities
 
-import android.app.Dialog
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.view.View
-import android.widget.Toast
-import com.example.favoritedishes.R
-import com.example.favoritedishes.databinding.ActivityAddUpdateDishBinding
-import com.example.favoritedishes.databinding.DialogCustomImageSelectionBinding
-import com.karumi.dexter.Dexter
 import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.Dialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
@@ -19,15 +11,18 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
 import android.text.TextUtils
 import android.util.Log
+import android.view.View
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.annotation.Nullable
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
-import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -35,13 +30,17 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import com.example.favoritedishes.R
 import com.example.favoritedishes.application.FavDishApplication
+import com.example.favoritedishes.databinding.ActivityAddUpdateDishBinding
+import com.example.favoritedishes.databinding.DialogCustomImageSelectionBinding
 import com.example.favoritedishes.databinding.DialogCustomListBinding
 import com.example.favoritedishes.model.entities.FavDish
 import com.example.favoritedishes.utils.Constants
 import com.example.favoritedishes.view.adapters.CustomListItemAdapter
 import com.example.favoritedishes.viewmodel.FavDishViewModel
 import com.example.favoritedishes.viewmodel.FavDishViewModelFactory
+import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionDeniedResponse
@@ -65,21 +64,41 @@ class AddUpdateDishActivity : AppCompatActivity(), View.OnClickListener {
     // A global variable for the custom list dialog.
     private lateinit var mCustomListDialog: Dialog
 
-    /**
-     * To create the ViewModel we used the viewModels delegate, passing in an instance of our FavDishViewModelFactory.
-     * This is constructed based on the repository retrieved from the FavDishApplication.
-     */
+    private var mFavDishDetails: FavDish? = null
+
     private val mFavDishViewModel: FavDishViewModel by viewModels {
         FavDishViewModelFactory((application as FavDishApplication).repository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         mBinding = ActivityAddUpdateDishBinding.inflate(layoutInflater)
         setContentView(mBinding.root)
 
         setupActionBar()
+
+        if (intent.hasExtra(Constants.EXTRA_DISH_DETAILS)) {
+            mFavDishDetails = intent.getParcelableExtra(Constants.EXTRA_DISH_DETAILS)
+        }
+
+        mFavDishDetails?.let {
+            if (it.id != 0) {
+                mImagePath = it.image
+                Glide.with(this@AddUpdateDishActivity)
+                    .load(mImagePath)
+                    .centerCrop()
+                    .into(mBinding.ivDishImage)
+
+                mBinding.etTitle.setText(it.title)
+                mBinding.etType.setText(it.type)
+                mBinding.etCategory.setText(it.category)
+                mBinding.etIngredients.setText(it.ingredients)
+                mBinding.etCookingTime.setText(it.cookingTime)
+                mBinding.etDirectionToCook.setText(it.directionToCook)
+
+                mBinding.btnAddDish.text = resources.getString(R.string.lbl_update_dish)
+            }
+        }
 
         mBinding.ivAddDishImage.setOnClickListener(this@AddUpdateDishActivity)
 
@@ -196,29 +215,48 @@ class AddUpdateDishActivity : AppCompatActivity(), View.OnClickListener {
                     }
                     else -> {
 
-                        val favDishDetails: FavDish = FavDish(
+                        var dishID = 0
+                        var imageSource = Constants.DISH_IMAGE_SOURCE_LOCAL
+                        var favoriteDish = false
+
+                        mFavDishDetails?.let {
+                            if (it.id != 0) {
+                                dishID = it.id
+                                imageSource = it.imageSource
+                                favoriteDish = it.favoriteDish
+                            }
+                        }
+
+                        val favDishDetails = FavDish(
                             mImagePath,
-                            Constants.DISH_IMAGE_SOURCE_LOCAL,
+                            imageSource,
                             title,
                             type,
                             category,
                             ingredients,
                             cookingTimeInMinutes,
                             cookingDirection,
-                            false
+                            favoriteDish,
+                            dishID
                         )
 
-                        mFavDishViewModel.insert(favDishDetails)
-
-                        Toast.makeText(
-                            this@AddUpdateDishActivity,
-                            "You successfully added your favorite dish details.",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
-                        // You even print the log if Toast is not displayed on emulator
-                        Log.e("Insertion", "Success")
-                        // Finish the Activity
+                        if (dishID == 0) {
+                            mFavDishViewModel.insert(favDishDetails)
+                            Toast.makeText(
+                                this@AddUpdateDishActivity,
+                                "You successfully added your favorite dish details.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            Log.i("Insertion", "Success")
+                        } else {
+                            mFavDishViewModel.update(favDishDetails)
+                            Toast.makeText(
+                                this@AddUpdateDishActivity,
+                                "You successfully added your favorite dish details.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            Log.i("Insertion", "Success")
+                        }
                         finish()
                     }
                 }
@@ -226,20 +264,6 @@ class AddUpdateDishActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    /**
-     * Receive the result from a previous call to
-     * {@link #startActivityForResult(Intent, int)}.  This follows the
-     * related Activity API as described there in
-     * {@link Activity#onActivityResult(int, int, Intent)}.
-     *
-     * @param requestCode The integer request code originally supplied to
-     *                    startActivityForResult(), allowing you to identify who this
-     *                    result came from.
-     * @param resultCode The integer result code returned by the child activity
-     *                   through its setResult().
-     * @param data An Intent, which can return result data to the caller
-     *               (various data can be attached to Intent "extras").
-     */
     public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == Activity.RESULT_OK) {
@@ -320,11 +344,19 @@ class AddUpdateDishActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    /**
-     * A function for ActionBar setup.
-     */
+
     private fun setupActionBar() {
         setSupportActionBar(mBinding.toolbarAddDishActivity)
+
+        if (mFavDishDetails != null && mFavDishDetails!!.id != 0) {
+            supportActionBar?.let {
+                it.title = resources.getString(R.string.title_edit_dish)
+            }
+        } else {
+            supportActionBar?.let {
+                it.title = resources.getString(R.string.title_add_dish)
+            }
+        }
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_arrow_back)
@@ -332,10 +364,6 @@ class AddUpdateDishActivity : AppCompatActivity(), View.OnClickListener {
         mBinding.toolbarAddDishActivity.setNavigationOnClickListener { onBackPressed() }
     }
 
-
-    /**
-     * A function to launch the custom image selection dialog.
-     */
     private fun customImageSelectionDialog() {
         val dialog = Dialog(this@AddUpdateDishActivity)
 
@@ -444,24 +472,12 @@ class AddUpdateDishActivity : AppCompatActivity(), View.OnClickListener {
             }.show()
     }
 
-    /**
-     * A function to save a copy of an image to internal storage for FavDishApp to use.
-     *
-     * @param bitmap
-     */
     private fun saveImageToInternalStorage(bitmap: Bitmap): String {
 
-        // Get the context wrapper instance
         val wrapper = ContextWrapper(applicationContext)
 
         // Initializing a new file
         // The bellow line return a directory in internal storage
-        /**
-         * The Mode Private here is
-         * File creation mode: the default mode, where the created file can only
-         * be accessed by the calling application (or all applications sharing the
-         * same user ID).
-         */
         var file = wrapper.getDir(IMAGE_DIRECTORY, Context.MODE_PRIVATE)
 
         // Mention a file name to save the image
@@ -487,20 +503,11 @@ class AddUpdateDishActivity : AppCompatActivity(), View.OnClickListener {
         return file.absolutePath
     }
 
-    /**
-     * A function to launch the custom list dialog.
-     *
-     * @param title - Define the title at runtime according to the list items.
-     * @param itemsList - List of items to be selected.
-     * @param selection - By passing this param you can identify the list item selection.
-     */
     private fun customItemsListDialog(title: String, itemsList: List<String>, selection: String) {
         mCustomListDialog = Dialog(this@AddUpdateDishActivity)
 
         val binding: DialogCustomListBinding = DialogCustomListBinding.inflate(layoutInflater)
 
-        /*Set the screen content from a layout resource.
-        The resource will be inflated, adding all top-level views to the screen.*/
         mCustomListDialog.setContentView(binding.root)
 
         binding.tvTitle.text = title
@@ -515,12 +522,6 @@ class AddUpdateDishActivity : AppCompatActivity(), View.OnClickListener {
         mCustomListDialog.show()
     }
 
-    /**
-     * A function to set the selected item to the view.
-     *
-     * @param item - Selected Item.
-     * @param selection - Identify the selection and set it to the view accordingly.
-     */
     fun selectedListItem(item: String, selection: String) {
 
         when (selection) {

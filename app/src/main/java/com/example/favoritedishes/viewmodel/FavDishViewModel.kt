@@ -4,7 +4,6 @@ import androidx.lifecycle.*
 import com.example.favoritedishes.model.database.FavDishRepository
 import com.example.favoritedishes.model.entities.FavDish
 import kotlinx.coroutines.launch
-import java.lang.IllegalArgumentException
 
 class FavDishViewModel(private val repository: FavDishRepository): ViewModel() {
 
@@ -13,6 +12,16 @@ class FavDishViewModel(private val repository: FavDishRepository): ViewModel() {
     }
 
     val allDishesList: LiveData<List<FavDish>> = repository.allDishesList.asLiveData()
+
+    fun update(dish: FavDish) = viewModelScope.launch {
+        repository.updateFavDishData(dish)
+    }
+
+    val favoriteDishes: LiveData<List<FavDish>> = repository.favoriteDishes.asLiveData()
+
+    fun delete(dish: FavDish) = viewModelScope.launch {
+        repository.deleteFavDishData(dish)
+    }
 }
 
 class FavDishViewModelFactory(private val repository: FavDishRepository): ViewModelProvider.Factory{
@@ -23,5 +32,4 @@ class FavDishViewModelFactory(private val repository: FavDishRepository): ViewMo
         }
         throw IllegalArgumentException("Unknown ViewModel Class")
     }
-
 }

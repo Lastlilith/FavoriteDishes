@@ -37,4 +37,20 @@
     <string name="title_dish_details">Dish Details</string>
 
     <string name="lbl_estimate_cooking_time">The approximate time required to cook the dish is %1$s minutes</string>
+
+    <string name="msg_added_to_favorites">You have added the dish to your favorites</string>
+    <string name="msg_removed_from_favorites">You have removed the dish from your favorites</string>
+    <string name="label_no_favorite_dishes_added_yet">No favorite dishes added yet</string>
+    
+    <string name="action_edit_dish">Edit dish</string>
+    <string name="action_delete_dish">Delete dish</string>
+
+    <string name="title_add_dish">Add dish</string>
+    <string name="title_edit_dish">Edit dish</string>
+    <string name="lbl_update_dish">Update Dish</string>
+
+    <string name="title_delete_dish">Delete Dish</string>
+    <string name="msg_delete_dish_dialog">Are you sure you want to delete %1$s?</string>
+    <string name="lbl_yes">Yes</string>
+    <string name="lbl_no">No</string>
 </resources>
