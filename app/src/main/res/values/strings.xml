@@ -53,4 +53,7 @@
     <string name="msg_delete_dish_dialog">Are you sure you want to delete %1$s?</string>
     <string name="lbl_yes">Yes</string>
     <string name="lbl_no">No</string>
+
+    <string name="action_filter_dishes">Filter dishes</string>
+    <string name="title_select_item_to_filter">Select item to filter</string>
 </resources>
