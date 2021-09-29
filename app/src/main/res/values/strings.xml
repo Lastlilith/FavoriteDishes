@@ -59,4 +59,6 @@
 
     <string name="message_already_added_to_favorites">You have already added the dish to your favorites</string>
     <string name="please_wait">Please wait…</string>
+
+    <string name="action_share_dish">Share dish</string>
 </resources>
