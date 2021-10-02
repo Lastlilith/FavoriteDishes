@@ -13,6 +13,7 @@ import androidx.work.*
 import com.example.favoritedishes.R
 import com.example.favoritedishes.databinding.ActivityMainBinding
 import com.example.favoritedishes.model.notification.NotifyWorker
+import com.example.favoritedishes.utils.Constants
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
@@ -38,6 +39,11 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(mNavController, appBarConfiguration)
         mBinding.navView.setupWithNavController(mNavController)
 
+        if(intent.hasExtra(Constants.NOTIFICATION_ID)) {
+            val notificationId = intent.getIntExtra(Constants.NOTIFICATION_ID, 0)
+            mBinding.navView.selectedItemId = R.id.navigation_random_dish
+        }
+
         startWork()
     }
 
@@ -47,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         .setRequiresBatteryNotLow(true)
         .build()
 
-    private fun createWorkRequest() = PeriodicWorkRequestBuilder<NotifyWorker>(15, TimeUnit.MINUTES)
+    private fun createWorkRequest() = PeriodicWorkRequestBuilder<NotifyWorker>(7, TimeUnit.DAYS)
         .setConstraints(createConstraints())
         .build()
 
